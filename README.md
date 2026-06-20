@@ -9,3 +9,13 @@
 
   Run `npm run dev` to start the development server.
   
+  ## Iniciar la aplicacion
+
+  En la raíz del proyecto ejecutar 
+  ```bash
+  node server/server.js
+  ```
+  En otra terminal
+  ```bash
+  npm run dev
+  ```
