@@ -3,6 +3,7 @@ import { User, Declaration } from "../types";
 import { QRCode } from "./QRCode";
 import { ErrorCard } from "./ErrorCard";
 import { isProhibitedProduct, formatDate } from "../utils";
+import { upsertDeclarations } from "../../lib/declarationsService";
 
 interface FoodScreenProps {
   user: User;
@@ -55,7 +56,7 @@ export function FoodScreen({ user, declarations, setDeclarations, onBack, onHome
 
   const handleRemove = (id: string) => setItems(prev => prev.filter(i => i.id !== id));
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const data = `ADU-ALI-${user.rut || user.passport}-${Date.now()}`;
     setQrData(data);
     setConfirmed(true);
@@ -66,6 +67,14 @@ export function FoodScreen({ user, declarations, setDeclarations, onBack, onHome
       date: formatDate(), status: "valid", qrData: data
     };
     setDeclarations([newDecl, ...declarations]);
+
+    if (user.id) {
+      try {
+        await upsertDeclarations([newDecl], user.id);
+      } catch (e) {
+        console.error("Error saving to db:", e);
+      }
+    }
   };
 
   return (

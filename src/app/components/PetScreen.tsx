@@ -2,6 +2,7 @@ import { useState, CSSProperties } from "react";
 import { User, Declaration } from "../types";
 import { QRCode } from "./QRCode";
 import { formatDate } from "../utils";
+import { upsertDeclarations } from "../../lib/declarationsService";
 
 interface PetScreenProps {
   user: User;
@@ -41,7 +42,7 @@ export function PetScreen({ user, declarations, setDeclarations, onBack, onHome 
     return Object.keys(e).length === 0;
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!validate()) return;
     const data = `ADU-PET-${user.rut || user.passport}-${Date.now()}`;
     setQrData(data);
@@ -53,6 +54,14 @@ export function PetScreen({ user, declarations, setDeclarations, onBack, onHome 
       date: formatDate(), status: "valid", qrData: data
     };
     setDeclarations([newDecl, ...declarations]);
+
+    if (user.id) {
+      try {
+        await upsertDeclarations([newDecl], user.id);
+      } catch (e) {
+        console.error("Error saving to db:", e);
+      }
+    }
   };
 
   return (

@@ -3,6 +3,7 @@ import { User, Declaration } from "../types";
 import { QRCode } from "./QRCode";
 import { ErrorCard } from "./ErrorCard";
 import { validateLicensePlate, formatDate } from "../utils";
+import { upsertDeclarations } from "../../lib/declarationsService";
 
 interface VehicleScreenProps {
   user: User;
@@ -69,7 +70,7 @@ export function VehicleScreen({ user, declarations, setDeclarations, onBack, onH
     else setNotFound(true);
   };
 
-  const handleGenerateQR = () => {
+  const handleGenerateQR = async () => {
     const vData = vehicle || manualData;
     const data = `ADU-VEH-${plate.toUpperCase()}-${user.rut || user.passport}-${Date.now()}`;
     setQrData(data);
@@ -80,7 +81,17 @@ export function VehicleScreen({ user, declarations, setDeclarations, onBack, onH
       subtitle: `Patente ${plate.toUpperCase()} · ${(vData as any).año || ""}`,
       date: formatDate(), status: "valid", qrData: data
     };
-    setDeclarations([newDecl, ...declarations.filter(d => d.type !== "vehicle")]);
+
+    const newDecls = [newDecl, ...declarations.filter(d => d.type !== "vehicle")];
+    setDeclarations(newDecls);
+
+    if (user.id) {
+      try {
+        await upsertDeclarations([newDecl], user.id);
+      } catch (e) {
+        console.error("Error saving to db:", e);
+      }
+    }
   };
 
   return (

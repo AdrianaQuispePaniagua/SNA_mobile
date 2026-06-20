@@ -3,6 +3,7 @@ import { User, Declaration } from "../types";
 import { QRCode } from "./QRCode";
 import { ErrorCard } from "./ErrorCard";
 import { validateRUT, validatePassport, formatDate } from "../utils";
+import { upsertDeclarations } from "../../lib/declarationsService";
 
 interface MinorAuthScreenProps {
   user: User;
@@ -61,7 +62,7 @@ export function MinorAuthScreen({ user, declarations, setDeclarations, onBack, o
 
     const isValid = !docId.includes("99") && nombre.trim().length > 3;
 
-    setTimeout(() => {
+    setTimeout(async () => {
       setValidationResult(isValid ? "valid" : "invalid");
       if (isValid) {
         const data = `ADU-MIN-${docId.replace(/[^A-Za-z0-9]/g, "")}-${Date.now()}`;
@@ -73,6 +74,14 @@ export function MinorAuthScreen({ user, declarations, setDeclarations, onBack, o
           date: formatDate(), status: "pending", qrData: data
         };
         setDeclarations([newDecl, ...declarations]);
+
+        if (user.id) {
+          try {
+            await upsertDeclarations([newDecl], user.id);
+          } catch (e) {
+            console.error("Error saving to db:", e);
+          }
+        }
       }
     }, 600);
   };
