@@ -82,7 +82,7 @@ app.post('/api/auth/login', async (req, res) => {
       email: user.email,
       phone: user.phone,
       birthDate: user.birth_date,
-      wantsPrintedQR: user.wants_printed_qr
+      wantsPrintedQR: Boolean(user.wants_printed_qr)
     });
   } catch (error) {
     console.error('Error in login:', error);
@@ -99,7 +99,20 @@ app.get('/api/declarations', async (req, res) => {
     }
 
     const [rows] = await pool.query('SELECT * FROM declarations WHERE user_id = ? ORDER BY created_at DESC', [userId]);
-    res.json(rows);
+    
+    // Mapear los resultados de snake_case a camelCase para el frontend
+    const mappedRows = rows.map(row => ({
+      id: row.id,
+      type: row.type,
+      emoji: row.emoji,
+      title: row.title,
+      subtitle: row.subtitle,
+      date: row.date,
+      status: row.status,
+      qrData: row.qr_data
+    }));
+
+    res.json(mappedRows);
   } catch (error) {
     console.error('Error fetching declarations:', error);
     res.status(500).json({ message: 'Error al obtener declaraciones' });
